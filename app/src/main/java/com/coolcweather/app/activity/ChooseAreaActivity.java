@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.AdapterView;
@@ -139,7 +140,9 @@ public class ChooseAreaActivity extends Activity {
      * 查询选中市内所有的县，优先从数据库查询，如果没有查询到再去服务器上查询。
      */
     private void queryCounties() {
+        Log.d("ChooseAreaActivity", selectedCity.getCityName());
         countyList = coolWeatherDB.loadCounties(selectedCity.getId());
+        Log.d("ChooseAreaActivity", countyList.size() + "");
         if (countyList.size() > 0) {
             dataList.clear();
             for (County county : countyList) {
@@ -164,6 +167,9 @@ public class ChooseAreaActivity extends Activity {
         } else {
             address = BASE_ADDRESS + code;
         }
+
+        Log.d("ChooseAreaActivity", address);
+
         //显示进度条
         showProgressDialog();
         HttpUtil.sendHttpRequest(address, new HttpCallbackListener() {
@@ -174,9 +180,10 @@ public class ChooseAreaActivity extends Activity {
                     result = Utility.handleProvincesResponse(coolWeatherDB, response);
                 } else if ("city".equals(type)) {
                     result = Utility.handleCitiesResponse(coolWeatherDB, response, selectedProvince.getId());
-                } else if ("county".equals("type")) {
+                } else if ("county".equals(type)) {
                     result = Utility.handleCountiesResponse(coolWeatherDB, response, selectedCity.getId());
                 }
+                Log.d("ChooseAreaActivity", result + "");
                 if(result) {
                     //通过runOnUiThread()方法回到主线程处理逻辑
                     runOnUiThread(new Runnable() {
@@ -188,7 +195,7 @@ public class ChooseAreaActivity extends Activity {
                                 queryProvinces();
                             } else if ("city".equals(type)) {
                                 queryCities();
-                            } else if ("county".equals("type")) {
+                            } else if ("county".equals(type)) {
                                 queryCounties();
                             }
                         }

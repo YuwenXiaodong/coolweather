@@ -60,7 +60,7 @@ public class CoolWeatherDB {
             //利用ContentValues组装数据，并且存入SQLite数据库
             ContentValues values = new ContentValues();
             values.put("province_name", province.getProvinceName());
-            values.put("province_coed", province.getProvinceCode());
+            values.put("province_code", province.getProvinceCode());
             db.insert("Province", null, values);
         }
     }
@@ -143,6 +143,7 @@ public class CoolWeatherDB {
                 county.setCountyName(cursor.getString(cursor.getColumnIndex("county_name")));
                 county.setCountyCode(cursor.getString(cursor.getColumnIndex("county_code")));
                 county.setCityId(cityId);
+                list.add(county);
             } while (cursor.moveToNext());
         }
         return list;
