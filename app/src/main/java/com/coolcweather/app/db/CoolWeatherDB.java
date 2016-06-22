@@ -16,6 +16,10 @@ import java.util.List;
 /**
  * Created by Administrator on 2016/6/21.
  * 采用单例设计模式，保证CoolWeatherDB实例化对象的唯一性
+ * 该类含有数据库操作的基本功能：
+ * ---1：将省份信息存入数据库、把数据库的所有省份信息全部取出
+ * ---2：将城市信息存入数据库、把数据库中指定省份的城市信息全部取出
+ * ---3：将县信息存入数据库、把数据库中指定城市的县信息全部取出
  */
 public class CoolWeatherDB {
 

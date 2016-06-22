@@ -27,6 +27,7 @@ import java.util.List;
 
 /**
  * Created by Administrator on 2016/6/22.
+ * 该Activity用于遍历并展示全国省市县数据
  */
 public class ChooseAreaActivity extends Activity {
 
@@ -73,6 +74,10 @@ public class ChooseAreaActivity extends Activity {
      */
     private int currentLevel;
 
+    /**
+     * 初始化一些东西，比如说控件，coolWeatherDb等等
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -222,9 +227,12 @@ public class ChooseAreaActivity extends Activity {
      * 显示进度对话框
      */
     private void showProgressDialog() {
-        progressDialog = new ProgressDialog(this);
-        progressDialog.setMessage("正在加载...");
-        progressDialog.setCanceledOnTouchOutside(false);
+        if(progressDialog == null){
+            progressDialog = new ProgressDialog(this);
+            progressDialog.setMessage("正在加载...");
+            progressDialog.setCanceledOnTouchOutside(false);
+        }
+        progressDialog.show();
     }
 
     /**
