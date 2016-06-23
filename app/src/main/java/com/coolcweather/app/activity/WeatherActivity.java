@@ -1,11 +1,16 @@
 package com.coolcweather.app.activity;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.View;
 import android.view.Window;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.coolcweather.app.R;
@@ -23,7 +28,7 @@ import java.net.URLEncoder;
 /**
  * Created by Administrator on 2016/6/23.
  */
-public class WeatherActivity extends Activity{
+public class WeatherActivity extends Activity implements View.OnClickListener{
 
     /**
      * 高德地图地理编码的基地址
@@ -65,6 +70,41 @@ public class WeatherActivity extends Activity{
      */
     private TextView weatherDesp;
 
+    /**
+     * 利用异步消息机制对UI进行操作。
+     */
+    public static final int UPDATE_TEXT = 1;
+
+    private Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case UPDATE_TEXT:
+                    //在这里可以进行UI操作
+                    showWeather();
+                    break;
+                default:
+                    break;
+            }
+        }
+    };
+
+    /**
+     * 切换城市按钮
+     */
+    private Button switchCity;
+
+    /**
+     * 更新天气按钮
+     */
+    private Button refreshWeather;
+
+    /**
+     * 地址的全名即省 + 市 + 县
+     */
+    private String fullAddress;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -77,10 +117,35 @@ public class WeatherActivity extends Activity{
         currentTemperature = (TextView) findViewById(R.id.current_temperature);
         minMaxTemperature = (TextView) findViewById(R.id.min_max_temperature);
         weatherDesp = (TextView) findViewById(R.id.weather_desp);
-        String fullAddress = getIntent().getStringExtra("fullAddress");
-        //Log.d("tiaoshi", fullAddress);
-        handleWeatherInfo(fullAddress);
+
+        fullAddress = getIntent().getStringExtra("fullAddress");
+        if (fullAddress != null) {
+            handleWeatherInfo(fullAddress);
+        }
         showWeather();
+
+        switchCity = (Button) findViewById(R.id.switch_city);
+        refreshWeather = (Button) findViewById(R.id.refresh_weather);
+        switchCity.setOnClickListener(this);
+        refreshWeather.setOnClickListener(this);
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.switch_city:
+                Intent intent = new Intent(WeatherActivity.this, ChooseAreaActivity.class);
+                intent.putExtra("from_weather_activity", true);
+                startActivity(intent);
+                finish();
+                break;
+            case R.id.refresh_weather:
+                publishText.setText("同步中...");
+                if (fullAddress != null) {
+                    handleWeatherInfo(fullAddress);
+                }
+                break;
+        }
     }
 
     /**
@@ -115,6 +180,9 @@ public class WeatherActivity extends Activity{
                         public void onFinish(String response) {
                             Log.d("tiaoshi", response);
                             Utility.handleWeatherResponse(WeatherActivity.this, response);
+                            Message msg = new Message();
+                            msg.what = UPDATE_TEXT;
+                            handler.sendMessage(msg);
                         }
 
                         @Override
@@ -142,7 +210,7 @@ public class WeatherActivity extends Activity{
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         cityNameText.setText(preferences.getString("city_name", ""));
         minMaxTemperature.setText(preferences.getString("min_max_temperature", ""));
-        currentTemperature.setText(preferences.getString("current_temperature", ""));
+        currentTemperature.setText(preferences.getString("current_temperature", "") + "℃");
         publishText.setText("今天" + preferences.getString("publish_time", "") + "发布");
         weatherDesp.setText(preferences.getString("weather_desp", ""));
         currentDateText.setText(preferences.getString("current_date", ""));
