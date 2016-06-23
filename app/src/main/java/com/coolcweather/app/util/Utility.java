@@ -1,5 +1,8 @@
 package com.coolcweather.app.util;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -90,6 +93,45 @@ public class Utility {
             return true;
         }
         return false;
+    }
+
+    /**
+     * 解析服务器返回的天气JSON数据，并将解析出的数据存储到本地。
+     */
+    public static void handleWeatherResponse(Context context, String response) {
+        try {
+            JSONObject jsonObject = new JSONObject(response).getJSONObject("result");
+            String cityName = jsonObject.getJSONObject("today").getString("city");
+            String minMaxTemperature = jsonObject.getJSONObject("today").getString("temperature");
+            String currentTemperature = jsonObject.getJSONObject("sk").getString("temp");
+            String publishTime = jsonObject.getJSONObject("sk").getString("time");
+            String weatherDesp = jsonObject.getJSONObject("today").getString("weather");
+            String currentDate = jsonObject.getJSONObject("today").getString("date_y");
+
+            saveWeatherInfo(context, cityName, minMaxTemperature, currentTemperature,
+                    publishTime, weatherDesp, currentDate);
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 将服务器返回的所有天气信息存储到SharedPreferences文件中
+     */
+    public static void saveWeatherInfo(Context context, String cityName, String minMaxTemperature,
+                                       String currentTemperature, String publishTime,
+                                       String weatherDesp, String currentDate) {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putBoolean("city_selected", true);
+        editor.putString("city_name", cityName);
+        editor.putString("min_max_temperature", minMaxTemperature);
+        editor.putString("current_temperature", currentTemperature);
+        editor.putString("publish_time", publishTime);
+        editor.putString("weather_desp", weatherDesp);
+        editor.putString("current_date", currentDate);
+        editor.commit();
     }
 
 }

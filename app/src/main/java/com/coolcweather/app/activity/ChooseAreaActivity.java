@@ -2,7 +2,10 @@ package com.coolcweather.app.activity;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -70,6 +73,11 @@ public class ChooseAreaActivity extends Activity {
     private City selectedCity;
 
     /**
+     * 选中的县
+     */
+    private County selectedCounty;
+
+    /**
      * 当前选中的级别
      */
     private int currentLevel;
@@ -81,6 +89,15 @@ public class ChooseAreaActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        if(preferences.getBoolean("city_selected", false)) {
+            Intent intent = new Intent(this, WeatherActivity.class);
+            startActivity(intent);
+            finish();
+            return;
+        }
+
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.choose_area);
         listView = (ListView) findViewById(R.id.list_view);
@@ -97,6 +114,13 @@ public class ChooseAreaActivity extends Activity {
                 } else if (currentLevel == LEVEL_CITY) {
                     selectedCity = cityList.get(position);
                     queryCounties();
+                } else if (currentLevel == LEVEL_COUNTY) {
+                    selectedCounty = countyList.get(position);
+                    Intent intent = new Intent(ChooseAreaActivity.this, WeatherActivity.class);
+                    intent.putExtra("fullAddress", selectedProvince.getProvinceName() + selectedCity.getCityName() +
+                                        selectedCounty.getCountyName());
+                    startActivity(intent);
+                    finish();
                 }
             }
         });
