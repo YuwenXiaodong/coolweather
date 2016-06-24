@@ -73,7 +73,7 @@ public class Utility {
      * 解析和处理服务器返回的县级数据
      */
     public static boolean handleCountiesResponse(CoolWeatherDB coolWeatherDB
-           , String response, int cityId){
+            , String response, int cityId){
         if (!TextUtils.isEmpty(response)) {
             try {
                 JSONArray jsonArray = new JSONObject(response).getJSONObject("str").getJSONArray("regions");

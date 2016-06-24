@@ -126,7 +126,7 @@ public class ChooseAreaActivity extends Activity {
                     selectedCounty = countyList.get(position);
                     Intent intent = new Intent(ChooseAreaActivity.this, WeatherActivity.class);
                     intent.putExtra("fullAddress", selectedProvince.getProvinceName() + selectedCity.getCityName() +
-                                        selectedCounty.getCountyName());
+                            selectedCounty.getCountyName());
                     startActivity(intent);
                     finish();
                 }
