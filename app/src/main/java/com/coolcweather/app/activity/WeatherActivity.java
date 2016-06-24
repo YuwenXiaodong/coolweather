@@ -14,6 +14,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.coolcweather.app.R;
+import com.coolcweather.app.service.AutoUpdateService;
 import com.coolcweather.app.util.HttpCallbackListener;
 import com.coolcweather.app.util.HttpUtil;
 import com.coolcweather.app.util.Utility;
@@ -128,6 +129,11 @@ public class WeatherActivity extends Activity implements View.OnClickListener{
         refreshWeather = (Button) findViewById(R.id.refresh_weather);
         switchCity.setOnClickListener(this);
         refreshWeather.setOnClickListener(this);
+
+        //利用intent自动更新启动服务，
+//        Intent intent = new Intent(this, AutoUpdateService.class);
+//        startService(intent);
+
     }
 
     @Override
@@ -141,6 +147,8 @@ public class WeatherActivity extends Activity implements View.OnClickListener{
                 break;
             case R.id.refresh_weather:
                 publishText.setText("同步中...");
+                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+                fullAddress = preferences.getString("full_address", null);
                 if (fullAddress != null) {
                     handleWeatherInfo(fullAddress);
                 }
@@ -153,6 +161,7 @@ public class WeatherActivity extends Activity implements View.OnClickListener{
      * 1.利用高德地图WebApi对指定地点进行地理编码
      * 2.通过获得的地理编码查询天气情况
      * 3.将获得的天气情况存储到SharedPreference中
+     * 4.通过异步消息机制，通知UI进行更新
      */
     private void handleWeatherInfo(String location) {
 
@@ -179,7 +188,7 @@ public class WeatherActivity extends Activity implements View.OnClickListener{
                         @Override
                         public void onFinish(String response) {
                             Log.d("tiaoshi", response);
-                            Utility.handleWeatherResponse(WeatherActivity.this, response);
+                            Utility.handleWeatherResponse(WeatherActivity.this, response, fullAddress);
                             Message msg = new Message();
                             msg.what = UPDATE_TEXT;
                             handler.sendMessage(msg);
@@ -215,5 +224,4 @@ public class WeatherActivity extends Activity implements View.OnClickListener{
         weatherDesp.setText(preferences.getString("weather_desp", ""));
         currentDateText.setText(preferences.getString("current_date", ""));
     }
-
 }

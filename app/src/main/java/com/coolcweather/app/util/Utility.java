@@ -98,7 +98,7 @@ public class Utility {
     /**
      * 解析服务器返回的天气JSON数据，并将解析出的数据存储到本地。
      */
-    public static void handleWeatherResponse(Context context, String response) {
+    public static void handleWeatherResponse(Context context, String response, String fullAddress) {
         try {
             JSONObject jsonObject = new JSONObject(response).getJSONObject("result");
             String cityName = jsonObject.getJSONObject("today").getString("city");
@@ -109,7 +109,7 @@ public class Utility {
             String currentDate = jsonObject.getJSONObject("today").getString("date_y");
 
             saveWeatherInfo(context, cityName, minMaxTemperature, currentTemperature,
-                    publishTime, weatherDesp, currentDate);
+                    publishTime, weatherDesp, currentDate, fullAddress);
 
 
         } catch (Exception e) {
@@ -122,7 +122,7 @@ public class Utility {
      */
     public static void saveWeatherInfo(Context context, String cityName, String minMaxTemperature,
                                        String currentTemperature, String publishTime,
-                                       String weatherDesp, String currentDate) {
+                                       String weatherDesp, String currentDate, String fullAddress) {
         SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
         editor.putBoolean("city_selected", true);
         editor.putString("city_name", cityName);
@@ -131,6 +131,7 @@ public class Utility {
         editor.putString("publish_time", publishTime);
         editor.putString("weather_desp", weatherDesp);
         editor.putString("current_date", currentDate);
+        editor.putString("full_address", fullAddress);
         editor.commit();
     }
 
