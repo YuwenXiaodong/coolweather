@@ -2,20 +2,27 @@ package com.coolcweather.app.activity;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import com.amap.api.location.AMapLocation;
+import com.amap.api.location.AMapLocationClient;
+import com.amap.api.location.AMapLocationClientOption;
+import com.amap.api.location.AMapLocationListener;
 import com.coolcweather.app.R;
 import com.coolcweather.app.db.CoolWeatherDB;
 import com.coolcweather.app.model.City;
@@ -24,7 +31,6 @@ import com.coolcweather.app.model.Province;
 import com.coolcweather.app.util.HttpCallbackListener;
 import com.coolcweather.app.util.HttpUtil;
 import com.coolcweather.app.util.Utility;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,6 +52,7 @@ public class ChooseAreaActivity extends Activity {
     private ArrayAdapter<String> adapter;
     private CoolWeatherDB coolWeatherDB;
     private List<String> dataList = new ArrayList<String>();
+    private TextView titleLocation;
 
     /**
      * 省列表
@@ -88,6 +95,59 @@ public class ChooseAreaActivity extends Activity {
     private boolean isFromWeatherActivity;
 
     /**
+     * 异步消息，更新UI
+     */
+    public final static int UPDATE_UI = 0;
+
+    private Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case UPDATE_UI:
+                    String location = (String) msg.obj;
+                    titleLocation.setText(location);
+                    break;
+                default:
+                    break;
+            }
+        }
+    };
+
+    //声明AMapLocationClient类对象
+    public AMapLocationClient mLocationClient = null;
+    //声明定位回调监听器
+    public AMapLocationListener mLocationListener = new AMapLocationListener() {
+        @Override
+        public void onLocationChanged(AMapLocation amapLocation) {
+            if (amapLocation != null) {
+                if (amapLocation.getErrorCode() == 0) {
+                    //定位成功回调信息，设置相关消息
+                    String province = amapLocation.getProvince();//省信息
+                    String city = amapLocation.getCity();//城市信息
+                    String district = amapLocation.getDistrict();//城区信息
+                    String fullAddress = province + city + district;
+                    Message msg = new Message();
+                    msg.what = UPDATE_UI;
+                    msg.obj = fullAddress;
+                    handler.sendMessage(msg);
+                } else {
+                    Message msg = new Message();
+                    msg.what = UPDATE_UI;
+                    msg.obj = "没有获取到当前位置。";
+                    handler.sendMessage(msg);
+                    //显示错误信息ErrCode是错误码，errInfo是错误信息，详见错误码表。
+                    Log.e("AmapError","location Error, ErrCode:"
+                            + amapLocation.getErrorCode() + ", errInfo:"
+                            + amapLocation.getErrorInfo());
+                }
+            }
+        }
+    };
+    //声明mLocationOption对象
+    public AMapLocationClientOption mLocationOption = null;
+
+
+    /**
      * 初始化一些东西，比如说控件，coolWeatherDb等等
      * @param savedInstanceState
      */
@@ -108,6 +168,7 @@ public class ChooseAreaActivity extends Activity {
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.choose_area);
+        titleLocation = (TextView) findViewById(R.id.title_location);
         listView = (ListView) findViewById(R.id.list_view);
         titleText = (TextView) findViewById(R.id.title_text);
         adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, dataList);
@@ -132,13 +193,64 @@ public class ChooseAreaActivity extends Activity {
                 }
             }
         });
-        queryProvinces();   //加载省级数据
+        listView.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                if (currentLevel == LEVEL_PROVINCE){
+                    if(firstVisibleItem != 0){
+                        //滑到顶部
+                        titleLocation.setVisibility(View.GONE);
+                    }
+                    else {
+                        //滑到非顶部
+                        titleLocation.setVisibility(View.VISIBLE);
+                    }
+                }
+            }
+        });
+        titleLocation.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //这里写被定位地址被点击的逻辑。
+
+                TextView textView = (TextView) v;
+
+                Intent intent = new Intent(ChooseAreaActivity.this, WeatherActivity.class);
+                intent.putExtra("fullAddress", textView.getText());
+                startActivity(intent);
+                finish();
+            }
+        });
+
+        //初始化定位
+        mLocationClient = new AMapLocationClient(getApplicationContext());
+        //设置定位回调监听
+        mLocationClient.setLocationListener(mLocationListener);
+        //初始化定位参数
+        mLocationOption = new AMapLocationClientOption();
+        //设置定位模式为高精度模式，Battery_Saving为低功耗模式，Device_Sensors是仅设备模式
+        mLocationOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);
+        //设置是否返回地址信息（默认返回地址信息）
+        mLocationOption.setNeedAddress(true);
+        //设置是否只定位一次,默认为false
+        mLocationOption.setOnceLocation(true);
+        //给定位客户端对象设置定位参数
+        mLocationClient.setLocationOption(mLocationOption);
+        //启动定位
+        mLocationClient.startLocation();
+        queryProvinces();
     }
 
     /**
      * 查询全国所有的省，优先从数据库查询，如果没有查询到再去服务器上查询
      */
     private void queryProvinces() {
+        titleLocation.setVisibility(View.VISIBLE);
         provinceList = coolWeatherDB.loadProvinces();
         if (provinceList.size() > 0) {
             dataList.clear();
@@ -158,6 +270,7 @@ public class ChooseAreaActivity extends Activity {
      * 查询选中省内所有的市，优先从数据库查询，如果没有查询到再去服务器上查询。
      */
     private void queryCities() {
+        titleLocation.setVisibility(View.GONE);
         cityList = coolWeatherDB.loadCities(selectedProvince.getId());
         if (cityList.size() > 0) {
             dataList.clear();
@@ -178,6 +291,7 @@ public class ChooseAreaActivity extends Activity {
      */
     private void queryCounties() {
         Log.d("ChooseAreaActivity", selectedCity.getCityName());
+        titleLocation.setVisibility(View.GONE);
         countyList = coolWeatherDB.loadCounties(selectedCity.getId());
         Log.d("ChooseAreaActivity", countyList.size() + "");
         if (countyList.size() > 0) {

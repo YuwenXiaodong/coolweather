@@ -5,12 +5,10 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
-
 import com.coolcweather.app.db.CoolWeatherDB;
 import com.coolcweather.app.model.City;
 import com.coolcweather.app.model.County;
 import com.coolcweather.app.model.Province;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -47,7 +45,7 @@ public class Utility {
      * 解析和处理服务器返回的市级数据
      */
     public static boolean handleCitiesResponse(CoolWeatherDB coolWeatherDB
-            , String response, int provinceId){
+            , String response, int provinceId) {
         if (!TextUtils.isEmpty(response)) {
             try {
                 JSONArray jsonArray = new JSONObject(response).getJSONObject("str").getJSONArray("regions");
@@ -73,7 +71,7 @@ public class Utility {
      * 解析和处理服务器返回的县级数据
      */
     public static boolean handleCountiesResponse(CoolWeatherDB coolWeatherDB
-            , String response, int cityId){
+            , String response, int cityId) {
         if (!TextUtils.isEmpty(response)) {
             try {
                 JSONArray jsonArray = new JSONObject(response).getJSONObject("str").getJSONArray("regions");
@@ -134,5 +132,4 @@ public class Utility {
         editor.putString("full_address", fullAddress);
         editor.commit();
     }
-
 }
